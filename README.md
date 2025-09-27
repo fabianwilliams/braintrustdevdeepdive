@@ -1,44 +1,95 @@
-# Braintrust Dev Deep Dive (Personal Lab) 
+# Braintrust Dev Deep Dive (Personal Lab)
 
-This repository documents my **personal learning journey** exploring [Braintrust](https://www.braintrust.dev/) end-to-end: from simple AI agent evals, to multi-step workflows, observability with OpenTelemetry, and CI/CD integration. 
+This repository documents my **personal learning journey** exploring Braintrust end-to-end:
+simple evals → multi-step agents → observability with OpenTelemetry → CI/CD.
 
-⚠️ **Note**: This is not an official Microsoft or Braintrust project. It’s my own lab work, and I’m sharing it openly so others can learn from my experiments. 
+⚠️ Note: This is not an official Microsoft or Braintrust project.
 
-## Goals 
-- Build and evaluate AI agents using Braintrust evals. 
-- Compare local (Ollama) vs frontier (OpenAI, Anthropic) models. 
-- Instrument agents with OpenTelemetry (OTel) for observability. 
-- Forward telemetry to **Azure Application Insights**. 
-- Integrate evals into **GitHub Actions CI/CD**. 
+## Goals
+- Build and evaluate AI agents using Braintrust evals
+- Compare local (Ollama) vs frontier (OpenAI, Anthropic) models
+- Add observability with OpenTelemetry (`BraintrustSpanProcessor` + project scoping)
+- Optionally mirror telemetry to **Azure Application Insights**
+- Automate evals in **GitHub Actions CI/CD**
 
-## Local Setup 
+## Setup
 
-```bash 
-git clone https://github.com/fabianwilliams/braintrustdevdeepdive 
-cd braintrustdevdeepdive 
-python3 -m venv .venv 
-source .venv/bin/activate 
-pip install -r requirements.txt 
+```bash
+git clone https://github.com/fabianwilliams/braintrustdevdeepdive
+cd braintrustdevdeepdive
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.template .env  # then fill values
 ``` 
 
 Create a `.env` file: 
 
 ```bash 
-BRAINTRUST_API_KEY="your_key_here" 
-OPENAI_API_KEY="your_key_here" 
+BRAINTRUST_API_KEY=sk-...
+PROJECT_NAME=Fabs27Sep25DeepDive
+OPENAI_API_KEY=your_openai_key 
 AZURE_MONITOR_CONNECTION_STRING="your_conn_str_here" 
 ``` 
 
 ## Usage 
-- Run evals: 
+
+- Hello evals: 
 ```bash 
 braintrust eval eval_hello.py 
 ``` 
+
+## LLM Mode
+```bash
+export HELLO_MODE=llm
+braintrust eval evals/eval_hello.py
+```
+
+## LOCAL model
+```bash
+export USE_LOCAL_MODEL=true
+export LOCAL_OPENAI_MODEL="llama3.3:70b"
+braintrust eval evals/eval_hello.py
+```
+
+## Multi Step Agent Eval
+```bash
+braintrust eval evals/eval_trip.py
+```
+
+## Observability
+
+```bash
+python observability/otel_setup.py
+```
+## CI/CD
+Add BRAINTRUST_API_KEY to GitHub Secrets
+Open a PR or push to main to trigger the eval workflow
+
+Runs and agents are logged to Braintrust (scoped to $PROJECT_NAME).
+Optionally forward to Azure Monitor via AZURE_MONITOR_CONNECTION_STRING.
+
 - Explore traces in Braintrust UI or Azure Monitor. 
 - Submit PRs to see GitHub Actions CI run evals automatically. 
 
 This repo is meant to **document experiments** and invite collaboration. 
 Feedback and forks are welcome! 
+
+## Folder Structure
+```text
+evals/
+  eval_hello.py        # Hello evaluation (string match + LLM variant)
+  eval_trip.py         # Multi-step agent eval with LLMClassifier
+agents/
+  plan_trip.py         # Agent logic (decision -> tool -> judge -> compose)
+observability/
+  otel_setup.py        # OTel config (Braintrust + optional Azure)
+.github/workflows/run-evals.yml
+requirements.txt
+.env.template
+.gitignore
+AGENT_GUIDE.md
+```
 
 --- 
 

@@ -1,0 +1,7 @@
+braintrust[otel]>=0.2.9
+autoevals>=0.0.130
+openai>=1.109.0
+python-dotenv>=1.0
+opentelemetry-sdk>=1.37.0
+azure-monitor-opentelemetry-exporter>=1.0.0b20
+azure-monitor-opentelemetry>=1.6.2
