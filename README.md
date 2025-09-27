@@ -5,6 +5,9 @@ simple evals → multi-step agents → observability with OpenTelemetry → CI/C
 
 ⚠️ Note: This is not an official Microsoft or Braintrust project.
 
+The Vision of this stems from this Lab I created ***With the help of ChatGPT*** for me to run thru!
+Do read it for context of what this GitHub Repo is here for. This Repo is the **How** the doc helps you with the **WHY** and the **WHAT**. FabsBraintrustE2ELabFromBasicToAdvanced.pdf
+
 ## Goals
 - Build and evaluate AI agents using Braintrust evals
 - Compare local (Ollama) vs frontier (OpenAI, Anthropic) models
@@ -33,11 +36,6 @@ AZURE_MONITOR_CONNECTION_STRING="your_conn_str_here"
 ``` 
 
 ## Usage 
-
-- Hello evals: 
-```bash 
-braintrust eval eval_hello.py 
-``` 
 
 ## LLM Mode
 ```bash
