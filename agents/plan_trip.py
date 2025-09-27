@@ -1,7 +1,6 @@
 import os
 import random
 from datetime import datetime, timedelta
-
 from dotenv import load_dotenv
 import braintrust
 from braintrust import init_logger, wrap_openai
@@ -10,39 +9,35 @@ load_dotenv()
 
 def _frontier_client():
     import openai
-    project = os.getenv("PROJECT_NAME", "LocalDevProject")
+    project = os.getenv("PROJECT_NAME", "Fabs27Sep25DeepDive")
     os.environ.setdefault("BRAINTRUST_PARENT", f"project_name:{project}")
-
-    client = wrap_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", "")))
     init_logger(project=project)
+    client = wrap_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", "")))
     model = os.getenv("FRONTIER_MODEL", "gpt-4o-mini")
     return client, model
 
-
 def _local_client():
-    from openai import OpenAI
-    project = os.getenv("PROJECT_NAME", "LocalDevProject")
+    import openai
+    project = os.getenv("PROJECT_NAME", "Fabs27Sep25DeepDive")
     os.environ.setdefault("BRAINTRUST_PARENT", f"project_name:{project}")
     init_logger(project=project)
-
-    base_url = os.getenv("LOCAL_OPENAI_BASE_URL", "http://localhost:11434/v1")
-    api_key = os.getenv("OPENAI_API_KEY", "ollama")
-    model = os.getenv("LOCAL_OPENAI_MODEL", "llama3.3:70b")
-    return OpenAI(base_url=base_url, api_key=api_key), model
-
+    client = wrap_openai(
+        openai.OpenAI(
+            base_url=os.getenv("LOCAL_OPENAI_BASE_URL", "http://localhost:11434/v1"),
+            api_key=os.getenv("OPENAI_API_KEY", "ollama"),
+        )
+    )
+    model = os.getenv("LOCAL_OPENAI_MODEL", "gpt-oss:120b")
+    return client, model
 
 def _openai_client():
-    use_local = os.getenv("USE_LOCAL_MODEL", "false").lower() == "true"
-    return _local_client() if use_local else _frontier_client()
-
+    return _local_client() if os.getenv("USE_LOCAL_MODEL", "false").lower() == "true" else _frontier_client()
 
 def mock_weather_api(city: str, date: str):
     return {"forecast": random.choice(["sunny", "rainy", "cloudy"]), "date": date, "city": city}
 
-
 def mock_flight_api(origin: str, dest: str):
     return {"price": random.randint(200, 800), "origin": origin, "dest": dest}
-
 
 def extract_city(query: str) -> str:
     for token in query.replace("?", "").split():
@@ -50,21 +45,18 @@ def extract_city(query: str) -> str:
             return token
     return "Paris"
 
-
 def extract_route(query: str):
     words = query.replace(",", " ").split()
     origin = words[3] if len(words) > 3 else "NYC"
     dest = words[5] if len(words) > 5 else "London"
     return origin, dest
 
-
 def plan_trip(query: str) -> str:
     client, model = _openai_client()
 
-    decision_prompt = f"User query: '{query}'. Choose one: 'weather', 'flight', or 'both'."
     decision = client.chat.completions.create(
         model=model,
-        messages=[{"role": "user", "content": decision_prompt}],
+        messages=[{"role": "user", "content": f"User query: '{query}'. Choose one: 'weather', 'flight', or 'both'."}],
         temperature=0.0,
     ).choices[0].message.content.strip().lower()
 
@@ -79,12 +71,10 @@ def plan_trip(query: str) -> str:
 
     braintrust.trace({"name": "tool-results", "input": {"query": query, "decision": decision}, "output": result})
 
-    judge_prompt = f"Given results {result}, did I choose unnecessary actions? Reply 'yes' or 'no'."
     judgment = client.chat.completions.create(
         model=model,
-        messages=[{"role": "user", "content": judge_prompt}],
+        messages=[{"role": "user", "content": f"Given results {result}, did I choose unnecessary actions? Reply 'yes' or 'no'."}],
         temperature=0.0,
     ).choices[0].message.content.strip().lower()
 
-    answer = f"Decision: {decision}. Judgment unnecessary actions: {judgment}. Results: {result}."
-    return answer
+    return f"Decision: {decision}. Judgment unnecessary actions: {judgment}. Results: {result}."
