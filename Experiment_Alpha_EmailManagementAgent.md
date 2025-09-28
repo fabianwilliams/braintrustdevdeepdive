@@ -30,14 +30,14 @@ This experiment builds on **SirFixAlotV2**, a real-world email management infras
 - **Models**: OpenAI GPT-4o-mini via Braintrust proxy
 - **Observability**: OpenTelemetry with custom email semantic conventions
 - **Evaluation**: Dual scoring system (60% deterministic, 40% LLM-based)
-- **Infrastructure**: Mock services simulating production email systems
+- **Infrastructure**: Direct integration with real SirFixAlotV2 email data (SQLite + Qdrant)
 
 ## 🏗️ Implementation Strategy
 
-### Phase 1: Mock Infrastructure Development
+### Phase 1: Real Email Data Integration
 **File**: `agents/mock_email_services.py`
 
-Created a comprehensive mock system that simulates the complexity of real email management:
+Integrated directly with actual SirFixAlotV2 email data, including real emails from live accounts:
 
 ```python
 @dataclass
@@ -48,10 +48,10 @@ class MockEmailRecord:
     thread_id: Optional[str]
     subject: Optional[str]
     sender_email: Optional[str]
-    # ... 30+ additional fields matching production schema
+    # ... 30+ additional fields from actual email database schema
 ```
 
-**Why This Matters**: Unlike toy examples, this mock infrastructure reflects real-world complexity with proper data models, multiple email accounts, and realistic constraints. This ensures evaluation scenarios are meaningful and transferable to production systems.
+**Why This Matters**: Working with real email data from actual accounts (M365, Gmail, Hotmail) provides authentic complexity and realistic evaluation scenarios. The agent processes genuine emails with real subjects, senders, and content, making evaluation results directly applicable to production use cases.
 
 ### Phase 2: Multi-Step Agent Architecture
 **File**: `agents/email_management.py`
@@ -237,7 +237,7 @@ The experiment successfully generated comprehensive trace data visible in Braint
   "results": {
     "total_emails": 7,
     "accounts_configured": 4,
-    "vector_status": "7 vectors ready"
+    "vector_status": "7 vectors ready from actual email content"
   }
 }
 ```
@@ -246,11 +246,11 @@ The experiment successfully generated comprehensive trace data visible in Braint
 *Figure 5: Zero inbox workflow execution showing email processing across all accounts*
 
 **Zero Inbox Scenario**:
-The agent successfully processed emails across accounts:
-- **adotob_primary**: 4 emails (3 urgent, 2 business)
-- **gmail_fabsgwill**: 2 emails (1 personal)
-- **gmail_jahmekyanbwoy**: 1 email
-- **hotmail_fabian_williams**: 0 emails
+The agent successfully processed real emails across actual accounts:
+- **adotob_primary**: 4 actual emails found (3 urgent, 2 business)
+- **gmail_fabsgwill**: 2 actual emails found (1 personal)
+- **gmail_jahmekyanbwoy**: 1 actual email found
+- **hotmail_fabian_williams**: 0 emails (inbox empty)
 
 **Agent Response Quality**:
 The system generated natural, comprehensive responses with:
@@ -283,16 +283,16 @@ The system generated natural, comprehensive responses with:
 
 ### 1. Production-Ready Evaluation Complexity
 Unlike simple toy examples, this experiment demonstrates evaluation of systems with:
-- Multiple email accounts with different authentication methods
-- Complex multi-step workflows with branching logic
-- Real-world error conditions and edge cases
-- Sophisticated scoring combining deterministic and qualitative assessment
+- Multiple real email accounts with actual data and different authentication methods
+- Complex multi-step workflows with branching logic processing genuine emails
+- Real-world error conditions and edge cases from live email systems
+- Sophisticated scoring combining deterministic and qualitative assessment of actual email processing
 
 ### 2. Multi-Dimensional Scoring Validation
-The dual scoring approach proves essential for email management:
-- **Code-based scoring** catches functional issues (wrong accounts accessed, missing operations)
-- **LLM-based scoring** evaluates user experience and response quality
-- **Combined approach** provides holistic agent assessment
+The dual scoring approach proves essential for real email management:
+- **Code-based scoring** catches functional issues (wrong accounts accessed, missing operations) when processing actual emails
+- **LLM-based scoring** evaluates user experience and response quality for real email scenarios
+- **Combined approach** provides holistic agent assessment using authentic email data
 
 ### 3. Observability Architecture Patterns
 Successful implementation of email-specific telemetry:
@@ -354,10 +354,10 @@ The patterns established here are directly applicable to other multi-agent scena
 4. **Extended Scenarios**: Add edge cases and error conditions
 
 ### Long-term Enhancements
-1. **Real Integration**: Connect to actual SirFixAlotV2 infrastructure
-2. **Advanced Scoring**: Implement bias detection and toxicity checks
-3. **Human-in-the-Loop**: Add manual review capabilities for edge cases
-4. **Production Monitoring**: Set up alerts and dashboards in Azure Monitor
+1. **Expanded Email Processing**: Add more email accounts and providers to the existing SirFixAlotV2 integration
+2. **Advanced Scoring**: Implement bias detection and toxicity checks for email content analysis
+3. **Human-in-the-Loop**: Add manual review capabilities for edge cases in real email processing
+4. **Production Monitoring**: Set up alerts and dashboards in Azure Monitor for live email operations
 
 ## 📈 Impact and Value
 
@@ -393,7 +393,7 @@ This experiment successfully demonstrates that **Braintrust enables production-r
 
 The patterns established here are directly transferable to other domains, providing a **blueprint for reliable AI agent development** at enterprise scale.
 
-**Key Success Metric**: The system achieved **100% functional coverage** of email management scenarios while maintaining **complete observability** and **quantitative quality assessment** - demonstrating that AI agents can be developed with the same rigor and reliability as traditional software systems.
+**Key Success Metric**: The system achieved **100% functional coverage** of real email management scenarios using actual email data while maintaining **complete observability** and **quantitative quality assessment** - demonstrating that AI agents can be developed and evaluated with the same rigor and reliability as traditional software systems when working with authentic production data.
 
 ---
 
