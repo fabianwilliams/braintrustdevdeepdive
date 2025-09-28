@@ -2,6 +2,8 @@
 
 This guide brings coding assistants up to speed on the current plan.
 
+raed the /Users/fabswill/ReposClaudeCode/braintrustdevdeepdive/FabsBraintrustE2ELabFromBasicToAdvanced.pdf document as well as https://www.braintrust.dev/docs/start and pay close attention to experiments, traces, logs and also intergation with OpenTelemetry (OTEL) as that is our focus 
+
 ## Project Context
 - Repo: `braintrustdevdeepdive`
 - Language: Python 3.10+

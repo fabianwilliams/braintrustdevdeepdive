@@ -1,12 +1,12 @@
-import os
-import random
+# agents/plan_trip.py
+import os, random
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-import braintrust
 from braintrust import init_logger, wrap_openai
 
 load_dotenv()
 
+# ----- helpers -----
 def _frontier_client():
     import openai
     project = os.getenv("PROJECT_NAME", "Fabs27Sep25DeepDive")
@@ -31,50 +31,66 @@ def _local_client():
     return client, model
 
 def _openai_client():
-    return _local_client() if os.getenv("USE_LOCAL_MODEL", "false").lower() == "true" else _frontier_client()
+    return _local_client() if os.getenv("USE_LOCAL_MODEL","false").lower()=="true" else _frontier_client()
 
 def mock_weather_api(city: str, date: str):
-    return {"forecast": random.choice(["sunny", "rainy", "cloudy"]), "date": date, "city": city}
+    return {"forecast": random.choice(["sunny","rainy","cloudy"]), "date": date, "city": city}
 
 def mock_flight_api(origin: str, dest: str):
-    return {"price": random.randint(200, 800), "origin": origin, "dest": dest}
+    return {"price": random.randint(200,800), "origin": origin, "dest": dest}
 
 def extract_city(query: str) -> str:
-    for token in query.replace("?", "").split():
-        if token.istitle():
-            return token
+    for tok in query.replace("?", "").split():
+        if tok.istitle():
+            return tok
     return "Paris"
 
 def extract_route(query: str):
     words = query.replace(",", " ").split()
     origin = words[3] if len(words) > 3 else "NYC"
-    dest = words[5] if len(words) > 5 else "London"
+    dest   = words[5] if len(words) > 5 else "London"
     return origin, dest
 
+# ----- main task -----
 def plan_trip(query: str) -> str:
-    client, model = _openai_client()
+    try:
+        client, model = _openai_client()
+    except Exception as e:
+        return f"ERROR: openai_client: {type(e).__name__}: {e}"
 
-    decision = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": f"User query: '{query}'. Choose one: 'weather', 'flight', or 'both'."}],
-        temperature=0.0,
-    ).choices[0].message.content.strip().lower()
+    # Step 1: decide tools
+    try:
+        decision_raw = client.chat.completions.create(
+            model=model,
+            messages=[{"role":"user","content": f"User query: '{query}'. Choose one: 'weather', 'flight', or 'both'."}],
+            temperature=0,
+        ).choices[0].message.content.strip().lower()
+        decision = "both" if "both" in decision_raw else ("weather" if "weather" in decision_raw else ("flight" if "flight" in decision_raw else "both"))
+    except Exception as e:
+        decision = "both"
+        decision_raw = f"ERROR: decision {type(e).__name__}: {e}"
 
+    # Step 2: tools (mocked)
     result = {}
-    if "weather" in decision:
-        city = extract_city(query)
-        date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        result["weather"] = mock_weather_api(city, date)
-    if "flight" in decision:
-        origin, dest = extract_route(query)
-        result["flight"] = mock_flight_api(origin, dest)
+    try:
+        if "weather" in decision:
+            city = extract_city(query)
+            date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+            result["weather"] = mock_weather_api(city, date)
+        if "flight" in decision:
+            origin, dest = extract_route(query)
+            result["flight"] = mock_flight_api(origin, dest)
+    except Exception as e:
+        result["tool_error"] = f"{type(e).__name__}: {e}"
 
-    braintrust.trace({"name": "tool-results", "input": {"query": query, "decision": decision}, "output": result})
+    # Step 3: self-judge
+    try:
+        judgment = client.chat.completions.create(
+            model=model,
+            messages=[{"role":"user","content": f"Given results {result}, did I choose unnecessary actions? Reply 'yes' or 'no'."}],
+            temperature=0,
+        ).choices[0].message.content.strip().lower()
+    except Exception as e:
+        judgment = f"ERROR: judge {type(e).__name__}: {e}"
 
-    judgment = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": f"Given results {result}, did I choose unnecessary actions? Reply 'yes' or 'no'."}],
-        temperature=0.0,
-    ).choices[0].message.content.strip().lower()
-
-    return f"Decision: {decision}. Judgment unnecessary actions: {judgment}. Results: {result}."
+    return f"Decision(raw='{decision_raw}', normalized='{decision}'). Judgment: {judgment}. Results: {result}."
