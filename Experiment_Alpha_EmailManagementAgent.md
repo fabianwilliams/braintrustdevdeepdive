@@ -30,14 +30,14 @@ This experiment builds on **SirFixAlotV2**, a real-world email management infras
 - **Models**: OpenAI GPT-4o-mini via Braintrust proxy
 - **Observability**: OpenTelemetry with custom email semantic conventions
 - **Evaluation**: Dual scoring system (60% deterministic, 40% LLM-based)
-- **Infrastructure**: Direct integration with real SirFixAlotV2 email data (SQLite + Qdrant)
+- **Infrastructure**: Hybrid data integration with real SirFixAlotV2 emails + mock samples (SQLite + Qdrant)
 
 ## 🏗️ Implementation Strategy
 
-### Phase 1: Real Email Data Integration
+### Phase 1: Hybrid Email Data Integration
 **File**: `agents/mock_email_services.py`
 
-Integrated directly with actual SirFixAlotV2 email data, including real emails from live accounts:
+Integrated with a hybrid approach combining real and mock email data:
 
 ```python
 @dataclass
@@ -48,10 +48,14 @@ class MockEmailRecord:
     thread_id: Optional[str]
     subject: Optional[str]
     sender_email: Optional[str]
-    # ... 30+ additional fields from actual email database schema
+    # ... 30+ additional fields matching SirFixAlotV2 schema
 ```
 
-**Why This Matters**: Working with real email data from actual accounts (M365, Gmail, Hotmail) provides authentic complexity and realistic evaluation scenarios. The agent processes genuine emails with real subjects, senders, and content, making evaluation results directly applicable to production use cases.
+**Data Sources**:
+- **Primary**: Real emails from actual accounts (M365, Gmail, Hotmail) populated via scripts into SQLite/Vector DB
+- **Supplementary**: Mock sample emails for consistent testing scenarios (e.g., travel confirmations, business inquiries)
+
+**Why This Matters**: This hybrid approach provides both authentic complexity from real email data and controlled test scenarios from mock data. The agent processes genuine emails with real subjects, senders, and content, while also handling predictable test cases for consistent evaluation.
 
 ### Phase 2: Multi-Step Agent Architecture
 **File**: `agents/email_management.py`
@@ -246,10 +250,10 @@ The experiment successfully generated comprehensive trace data visible in Braint
 *Figure 5: Zero inbox workflow execution showing email processing across all accounts*
 
 **Zero Inbox Scenario**:
-The agent successfully processed real emails across actual accounts:
-- **adotob_primary**: 4 actual emails found (3 urgent, 2 business)
-- **gmail_fabsgwill**: 2 actual emails found (1 personal)
-- **gmail_jahmekyanbwoy**: 1 actual email found
+The agent successfully processed emails across accounts (mix of real and sample data):
+- **adotob_primary**: 4 emails found (3 urgent, 2 business) - includes both real and sample emails
+- **gmail_fabsgwill**: 2 emails found (1 personal) - includes both real and sample emails
+- **gmail_jahmekyanbwoy**: 1 email found - sample newsletter email
 - **hotmail_fabian_williams**: 0 emails (inbox empty)
 
 **Agent Response Quality**:
